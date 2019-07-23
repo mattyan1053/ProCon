@@ -1,5 +1,20 @@
 using namespace std;
 
+/* 拡張ユークリッドの互除法(ax + by = 1 を満たすx, y) */
+template<typename T>
+T extgcd(T a, T b, T& x, T& y){
+    T d = a;
+    if (b != 0){
+        d = extgcd(b, a % b, y, x);
+        y -=(a / b) * x;
+    }
+    else {
+        x = 1; y = 0;
+    }
+    return d;
+}
+
+/* MODを法とする環 */
 template<typename T, T MOD = 1000000007>
 struct Mint {
 
@@ -17,33 +32,31 @@ struct Mint {
         if (v < 0) v += mod;
     }
 
+    /* べき乗を計算 */
     Mint pow(long long k){
         Mint res(1), tmp(v);
         while(k) {
             if(k & 1) res *= tmp;
             tmp *= tmp;
-            k >> 1;
+            k >>= 1;
         }
         return res;
     }
 
+    /* 単位元 */
     static Mint add_identity(){return Mint(0);}
     static Mint mul_identyty(){return Mint(1);}
     
     /* 逆元を求める */
-    // 拡張ユークリッド互除法
-    Mint inv(){
-        Mint u(1), v(0), tmp(v), b(mod);
-        while(b.v){
-            Mint t = tmp / b;
-            tmp -= t * b;
-            u -= t * v;
-            swap(u, v);
-        }
-        return u;
-    }
     // オイラーの定理
-    Mint inv_euler(){return pow(mod - 2);}
+    Mint inv(){return pow(mod - 2);}
+
+    // 拡張ユークリッド互除法
+    Mint inv_euclid(){
+        T x, y;
+        extgcd(v, mod, x, y);
+        return Mint(x);
+    }
 
     /* 演算子群 */
     Mint& operator+=(Mint a){
@@ -64,7 +77,7 @@ struct Mint {
     }
 
     Mint& operator/=(Mint a){
-        return (*this) *= a.inv();
+        return (*this) *= a.inv_euclid();
     }
 
     Mint operator+(Mint a) const {return Mint(v) += a;}
@@ -98,5 +111,8 @@ struct Mint {
 };
 
 template<typename T, T MOD> constexpr T Mint<T, MOD>::mod;
+
+/* ostreamで出力できるように */
 template<typename T, T MOD>
 ostream& operator<<(ostream &os, Mint<T, MOD> m){ os << m.v; return os;}
+
